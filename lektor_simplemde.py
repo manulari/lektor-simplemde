@@ -20,13 +20,22 @@ TEMPLATE = '''
                 let editor = new SimpleMDE({ element: e });
                 editor.codemirror.on('change', () => {
                     // update textarea value
-                    e.value = editor.value();
+                    var v = editor.value();
+                    if (e.value != v) { // only update if different, to avoid dirtying the state of the textarea immediately on load, which would cause the admin interface to ask for confirmation when leaving the page
+                        e.value = v;
 
-                    // dispatch a synthetic event for react to update its state
-                    let ev = new Event('input', { bubbles: true });
-                    ev.simulated = true;
-                    e.dispatchEvent(ev);
+                        // dispatch a synthetic event for react to update its state
+                        let ev = new Event('input', { bubbles: true });
+                        ev.simulated = true;
+                        e.dispatchEvent(ev);
+                    }
                 });
+                new MutationObserver(function() {
+                    if (e.value != editor.value()) {
+                        console.log('c');
+                        editor.codemirror.setValue(e.value);
+                    }
+                }).observe(e, { characterData: true, subtree: true });
             };
         });
     })).observe(
